@@ -35,8 +35,6 @@ function playSound(type, enabled=true) {
 const SK = "db-state-v2";
 function save(data) { try { localStorage.setItem(SK, JSON.stringify(data)); } catch {} }
 function load() { try { const r = localStorage.getItem(SK); return r ? JSON.parse(r) : null; } catch { return null; } }
-function save(data) { try { localStorage.setItem(SK, JSON.stringify(data)); } catch {} }
-function load() { try { const r = localStorage.getItem(SK); return r ? JSON.parse(r) : null; } catch { return null; } }
 
 // ─── DATA ─────────────────────────────────────────────────────────────
 const TOPICS = [
