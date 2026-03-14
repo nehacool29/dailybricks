@@ -370,18 +370,6 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:'Instrum
 .nav-icon{font-size:20px;display:block;margin-bottom:4px;}
 .pb{padding-bottom:80px;}
 
-/* Deploy modal */
-.modal-overlay{position:fixed;inset:0;background:rgba(26,23,20,0.7);z-index:200;display:flex;align-items:center;justify-content:center;padding:24px;}
-.modal{background:var(--surface);border:2px solid var(--ink);max-width:640px;width:100%;max-height:80vh;overflow-y:auto;}
-.modal-head{background:var(--ink);color:var(--bg);padding:20px 28px;display:flex;align-items:center;justify-content:space-between;}
-.modal-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;letter-spacing:-0.5px;}
-.modal-close{background:transparent;border:none;color:var(--bg);font-size:20px;cursor:pointer;line-height:1;}
-.modal-body{padding:28px;}
-.deploy-step{display:flex;gap:16px;margin-bottom:24px;}
-.step-num{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--red);flex-shrink:0;width:32px;}
-.step-content h4{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;margin-bottom:8px;}
-.step-content p{color:var(--ink2);font-size:14px;line-height:1.6;margin-bottom:8px;}
-.code-block{background:var(--bg2);border:1px solid var(--border2);padding:12px 16px;font-family:'DM Mono',monospace;font-size:12px;color:var(--ink);white-space:pre;overflow-x:auto;border-left:3px solid var(--red);}
 
 .live-dot{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;margin-right:6px;animation:blink 1.5s ease-in-out infinite;}
 @keyframes blink{0%,100%{opacity:1;}50%{opacity:0.3;}}
@@ -406,7 +394,6 @@ export default function DailyBricks() {
   const [dragIdx, setDragIdx] = useState(null);
   const [analytics, setAnalytics] = useState(null);
   const [loaded, setLoaded] = useState(false);
-  const [showDeploy, setShowDeploy] = useState(false);
 
   // Load persisted state
   useEffect(() => {
@@ -573,65 +560,6 @@ export default function DailyBricks() {
       <div className="app">
 
         {/* Deploy modal */}
-        {showDeploy && (
-          <div className="modal-overlay" onClick={() => setShowDeploy(false)}>
-            <div className="modal" onClick={e => e.stopPropagation()}>
-              <div className="modal-head">
-                <span className="modal-title">Deploy DailyBricks</span>
-                <button className="modal-close" onClick={() => setShowDeploy(false)}>✕</button>
-              </div>
-              <div className="modal-body">
-                <div className="deploy-step">
-                  <div className="step-num">1</div>
-                  <div className="step-content">
-                    <h4>Download the JSX file</h4>
-                    <p>Download <strong>DailyBricks.jsx</strong> from the Claude artifact. This is your entire app in one file.</p>
-                  </div>
-                </div>
-                <div className="deploy-step">
-                  <div className="step-num">2</div>
-                  <div className="step-content">
-                    <h4>Create a Vite + React project</h4>
-                    <div className="code-block">{`npm create vite@latest dailybricks -- --template react
-cd dailybricks
-npm install
-# Drop DailyBricks.jsx into src/
-# Update src/App.jsx:
-import DailyBricks from './DailyBricks'
-export default function App() { return <DailyBricks /> }`}</div>
-                  </div>
-                </div>
-                <div className="deploy-step">
-                  <div className="step-num">3</div>
-                  <div className="step-content">
-                    <h4>Deploy to Vercel (free)</h4>
-                    <div className="code-block">{`npm install -g vercel
-vercel
-# Follow prompts, deploy in ~60 seconds`}</div>
-                    <p style={{marginTop:10}}>Or push to GitHub and connect at <strong>vercel.com</strong> — zero config needed.</p>
-                  </div>
-                </div>
-                <div className="deploy-step">
-                  <div className="step-num">4</div>
-                  <div className="step-content">
-                    <h4>Custom domain (optional)</h4>
-                    <p>In Vercel → Project Settings → Domains, add your custom domain. Then at your domain registrar, add:</p>
-                    <div className="code-block">{`A     @     76.76.21.21
-CNAME www   cname.vercel-dns.com`}</div>
-                    <p style={{marginTop:10}}>SSL is automatic. Your app goes live in minutes.</p>
-                  </div>
-                </div>
-                <div className="deploy-step">
-                  <div className="step-num">5</div>
-                  <div className="step-content">
-                    <h4>Monitor analytics</h4>
-                    <p>The Analytics tab in this app tracks sessions, accuracy, and zone popularity in real-time using shared persistent storage. For production, swap in <strong>Mixpanel</strong> or <strong>PostHog</strong> — both have free tiers.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Header */}
         <header className="header">
@@ -645,9 +573,6 @@ CNAME www   cname.vercel-dns.com`}</div>
             <div className="hstat">🔥 <strong>{streak}</strong> streak</div>
             <div className="hstat">⚡ <strong>{totalXP}</strong> XP</div>
             <div className="hstat">Lv <strong>{level}</strong></div>
-            <button className="btn-s" style={{padding:"7px 14px",fontSize:11}} onClick={() => setShowDeploy(true)}>
-              🚀 Deploy Guide
-            </button>
           </div>
         </header>
 
@@ -826,7 +751,6 @@ CNAME www   cname.vercel-dns.com`}</div>
                   </div>
                   <div className="section-title">Usage Analytics</div>
                 </div>
-                <button className="btn-s" onClick={() => setShowDeploy(true)}>🚀 Deploy Guide</button>
               </div>
 
               <div className="analytics-grid">
