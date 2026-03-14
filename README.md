@@ -17,36 +17,7 @@ Daily practice for Databricks data engineers — mapped directly to the DE Assoc
 
 ---
 
-## Deploy to Vercel (free, ~5 minutes)
 
-### Step 1 — Install and run locally first
-
-```bash
-npm install
-npm run dev
-# Open http://localhost:5173 — you should see DailyBricks
-```
-
-### Step 2 — Push to GitHub
-
-```bash
-git init
-git add .
-git commit -m "Launch DailyBricks"
-git branch -M main
-git remote add origin https://github.com/YOUR_USERNAME/dailybricks.git
-git push -u origin main
-```
-
-### Step 3 — Deploy on Vercel
-
-1. Go to **vercel.com** → Sign up free with GitHub
-2. Click **"Add New Project"**
-3. Import your `dailybricks` repo
-4. Click **Deploy** — Vercel auto-detects Vite, no config needed
-5. Done in 60 seconds ✅
-
-Every `git push` auto-deploys from now on.
 
 ### Your live URL
 ```
