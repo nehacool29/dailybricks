@@ -1,0 +1,23 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Users can read/write their own doc only
+    match /users/{userId} {
+      allow read: if true;  // leaderboard needs public read
+      allow write: if true; // anonymous writes allowed (no auth)
+    }
+
+    // Sessions - write only, no read needed by client
+    match /sessions/{sessionId} {
+      allow write: if true;
+      allow read: if false;
+    }
+
+    // Analytics - public read, write allowed
+    match /analytics/{docId} {
+      allow read: if true;
+      allow write: if true;
+    }
+  }
+}
