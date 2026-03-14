@@ -4,6 +4,11 @@ import {
   writeSession, incrementAnalytics, getGlobalAnalytics,
   subscribeLeaderboard, subscribeAnalytics
 } from "./firebase";
+import {
+  supabase, sendMagicLink, signInWithPassword,
+  signUpWithPassword, signOut, onAuthChange,
+  saveProgressToSupabase, loadProgressFromSupabase
+} from "./supabase";
 
 // ─── SOUND ENGINE (Web Audio API — no files needed) ───────────────────
 function playSound(type, enabled=true) {
@@ -347,6 +352,18 @@ kbd{background:var(--bg4);border:1px solid var(--border2);border-radius:4px;padd
 .footer-txt a:hover{text-decoration:underline;}
 .profile-footer a{text-decoration:none;}
 .profile-footer a:hover{text-decoration:underline;}
+.auth-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px;}
+.auth-title{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:12px;}
+.auth-error{background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:8px 12px;font-size:12px;color:#fca5a5;margin-bottom:10px;}
+.auth-success{background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.3);border-radius:8px;padding:8px 12px;font-size:12px;color:#86efac;margin-bottom:10px;}
+.auth-links{display:flex;gap:10px;justify-content:center;font-size:12px;color:var(--yellow);margin-top:10px;cursor:pointer;flex-wrap:wrap;}
+.auth-logged-in{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+.auth-avatar{width:40px;height:40px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:white;flex-shrink:0;}
+.auth-email{font-size:14px;font-weight:600;color:var(--text);}
+.auth-sub{font-size:11px;color:var(--green);margin-top:2px;}
+.btn-signout{width:100%;background:transparent;border:1px solid var(--border2);border-radius:8px;padding:10px;font-size:13px;color:var(--text2);cursor:pointer;transition:all 0.15s;}
+.btn-signout:hover{border-color:var(--red);color:var(--red);}
+.settings-section-title{font-size:13px;font-weight:600;color:var(--text2);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;}
 
 /* ANIMATIONS */
 @keyframes slideUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
@@ -383,6 +400,13 @@ export default function DailyBricks() {
   const [onboardStep, setOnboardStep] = useState(0);
   const [tab, setTab] = useState("home");
   const [userId, setUserId] = useState(null);
+  const [authUser, setAuthUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState("");
+  const [authSuccess, setAuthSuccess] = useState("");
+  const [authMode, setAuthMode] = useState("magic"); // magic | password | signup
+  const [emailVal, setEmailVal] = useState("");
+  const [passVal, setPassVal] = useState("");
   const [lbData, setLbData] = useState([]);
   const [globalAnalytics, setGlobalAnalytics] = useState(null);
   const [email, setEmail] = useState("");
@@ -463,12 +487,35 @@ export default function DailyBricks() {
     // Subscribe to live analytics
     const unsubAn = subscribeAnalytics(data => setGlobalAnalytics(data));
 
-    return () => { unsubLb(); unsubAn(); };
+    // Supabase auth listener
+    const unsubAuth = onAuthChange(async (user) => {
+      setAuthUser(user);
+      if (user) {
+        // Load progress from Supabase for logged-in user
+        const remote = await loadProgressFromSupabase(user.id);
+        if (remote) {
+          setTotalPts(remote.totalPts || 0);
+          setStreak(remote.streak || 0);
+          setDailyPts(remote.dailyPts || 0);
+          setTopicProgress(remote.topicProgress || {});
+          setTopicAccuracy(remote.topicAccuracy || {});
+          setExercisesCompleted(remote.exercisesCompleted || 0);
+          setWeeklyPts(remote.weeklyPts || [0,0,0,0,0,0,0]);
+          save(remote);
+        }
+      }
+    });
+
+    return () => { unsubLb(); unsubAn(); unsubAuth(); };
   }, []);
 
   function persist(updates = {}) {
     const data = { totalPts, streak, dailyPts, dailyGoal, diffSetting, soundOn, topicProgress, topicAccuracy, weeklyPts, exercisesCompleted, ...updates };
     save(data);
+    // Sync to Supabase if logged in
+    if (authUser) {
+      saveProgressToSupabase(authUser.id, data);
+    }
     // Sync to Firestore (non-blocking)
     if (userId) {
       const uid = userId;
@@ -881,7 +928,89 @@ export default function DailyBricks() {
               <button className="btn-magic">Send magic link</button>
               <div className="pw-link">Sign in with password instead</div>
 
-              <div className="settings-title">Settings</div>
+              {/* AUTH SECTION */}
+              {!authUser ? (
+                <div className="auth-card">
+                  <div className="auth-title">
+                    {authMode === "magic" ? "Sign in — no password needed" :
+                     authMode === "signup" ? "Create account" : "Sign in with password"}
+                  </div>
+                  <input
+                    className="email-input"
+                    type="email"
+                    placeholder="you@email.com"
+                    value={emailVal}
+                    onChange={e => { setEmailVal(e.target.value); setAuthError(""); }}
+                  />
+                  {authMode !== "magic" && (
+                    <input
+                      className="email-input"
+                      type="password"
+                      placeholder="Password (min 6 characters)"
+                      value={passVal}
+                      onChange={e => { setPassVal(e.target.value); setAuthError(""); }}
+                    />
+                  )}
+                  {authError && <div className="auth-error">{authError}</div>}
+                  {authSuccess && <div className="auth-success">{authSuccess}</div>}
+                  <button
+                    className="btn-magic"
+                    disabled={authLoading}
+                    onClick={async () => {
+                      setAuthLoading(true); setAuthError(""); setAuthSuccess("");
+                      try {
+                        if (authMode === "magic") {
+                          await sendMagicLink(emailVal);
+                          setAuthSuccess("✓ Check your email for a magic sign-in link!");
+                        } else if (authMode === "password") {
+                          await signInWithPassword(emailVal, passVal);
+                          setAuthSuccess("✓ Signed in!");
+                        } else {
+                          await signUpWithPassword(emailVal, passVal);
+                          setAuthSuccess("✓ Account created! Check your email to confirm.");
+                        }
+                      } catch(e) {
+                        setAuthError(e.message || "Something went wrong. Try again.");
+                      }
+                      setAuthLoading(false);
+                    }}
+                  >
+                    {authLoading ? "Please wait..." :
+                     authMode === "magic" ? "Send magic link" :
+                     authMode === "signup" ? "Create account" : "Sign in"}
+                  </button>
+                  <div className="auth-links">
+                    {authMode === "magic" ? (
+                      <span onClick={() => { setAuthMode("password"); setAuthError(""); setAuthSuccess(""); }}>
+                        Sign in with password instead
+                      </span>
+                    ) : authMode === "password" ? (
+                      <>
+                        <span onClick={() => { setAuthMode("magic"); setAuthError(""); setAuthSuccess(""); }}>Use magic link</span>
+                        <span style={{color:"var(--text3)"}}>·</span>
+                        <span onClick={() => { setAuthMode("signup"); setAuthError(""); setAuthSuccess(""); }}>Sign up</span>
+                      </>
+                    ) : (
+                      <span onClick={() => { setAuthMode("magic"); setAuthError(""); setAuthSuccess(""); }}>Back to sign in</span>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="auth-card" style={{marginBottom:16}}>
+                  <div className="auth-logged-in">
+                    <div className="auth-avatar">{authUser.email?.[0]?.toUpperCase() || "U"}</div>
+                    <div>
+                      <div className="auth-email">{authUser.email}</div>
+                      <div className="auth-sub">Progress synced across devices ✓</div>
+                    </div>
+                  </div>
+                  <button className="btn-signout" onClick={async () => { await signOut(); setAuthUser(null); }}>
+                    Sign out
+                  </button>
+                </div>
+              )}
+
+              <div className="settings-section-title">Preferences</div>
 
               <div className="settings-card">
                 <div className="sc-title">Difficulty Level</div>
