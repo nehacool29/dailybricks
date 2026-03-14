@@ -101,8 +101,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Inter'
 /* TOPBAR */
 .topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);}
 .tbar-logo{display:flex;align-items:center;gap:8px;}
-.tbar-mark{width:28px;height:28px;background:var(--blue);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;}
-.tbar-learn{font-size:14px;color:var(--text2);}
+.tbar-appname{font-size:15px;font-weight:700;color:var(--text);}
+.tbar-bricks{color:var(--yellow);}
 .tbar-stats{display:flex;align-items:center;gap:14px;font-size:14px;font-weight:500;}
 .tbar-streak{color:var(--text);}
 .tbar-pts{color:var(--text2);}
@@ -333,6 +333,20 @@ kbd{background:var(--bg4);border:1px solid var(--border2);border-radius:4px;padd
 .nav-item.on{color:var(--yellow);}
 .nav-icon{font-size:22px;line-height:1;}
 .pb{padding-bottom:80px;}
+.home-eyebrow{font-size:10px;color:var(--text3);letter-spacing:3px;text-transform:uppercase;margin-bottom:6px;}
+.home-tagline{font-size:12px;color:var(--text3);margin-top:4px;line-height:1.6;}
+.cert-banner{background:#0d2544;border:1px solid #1d4ed8;border-radius:12px;padding:14px 16px;margin-bottom:14px;}
+.cert-eyebrow{font-size:9px;color:#60a5fa;letter-spacing:3px;text-transform:uppercase;margin-bottom:5px;}
+.cert-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:3px;}
+.cert-sub{font-size:12px;color:#93c5fd;margin-bottom:10px;}
+.cert-pills{display:flex;flex-wrap:wrap;gap:5px;}
+.cert-pill{font-size:10px;background:rgba(37,99,235,0.2);color:#93c5fd;border:1px solid rgba(59,130,246,0.3);border-radius:4px;padding:3px 8px;}
+.tc-bar-track{height:3px;background:var(--bg3);border-radius:2px;margin-top:7px;overflow:hidden;}
+.tc-bar-fill{height:100%;background:var(--blue);border-radius:2px;transition:width 0.4s ease;}
+.footer-txt a{text-decoration:none;}
+.footer-txt a:hover{text-decoration:underline;}
+.profile-footer a{text-decoration:none;}
+.profile-footer a:hover{text-decoration:underline;}
 
 /* ANIMATIONS */
 @keyframes slideUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
@@ -643,12 +657,20 @@ export default function DailyBricks() {
           {/* TOPBAR */}
           <div className="topbar">
             <div className="tbar-logo">
-              <div className="tbar-mark">DB</div>
-              <span className="tbar-learn">Learn</span>
+              <svg width="20" height="22" viewBox="0 0 48 52" style={{flexShrink:0}}>
+                <polygon points="24,0 48,10 24,20 0,10" fill="#f5a623"/>
+                <polygon points="24,8 48,18 48,26 24,16" fill="#d97706" opacity="0.9"/>
+                <polygon points="0,18 24,28 24,36 0,26" fill="#fbbf24" opacity="0.8"/>
+                <polygon points="24,16 48,26 48,34 24,24" fill="#b45309" opacity="0.85"/>
+                <polygon points="0,26 24,36 24,44 0,34" fill="#f59e0b" opacity="0.65"/>
+                <polygon points="24,24 48,34 24,44 0,34" fill="#d97706" opacity="0.9"/>
+              </svg>
+              <span className="tbar-appname">Daily<span className="tbar-bricks">Bricks</span></span>
             </div>
             <div className="tbar-stats">
-              <span className="tbar-streak">🔥 {streak}</span>
-              <span className="tbar-pts">⚡ <span>{dailyPts}</span>/{dailyGoal}</span>
+              <span className="tbar-streak">🔥{streak}</span>
+              <span className="tbar-xp">⚡<span>{totalPts}</span>XP</span>
+              <span className="tbar-lv">Lv<span>{Math.floor(totalPts/500)+1}</span></span>
             </div>
           </div>
 
@@ -656,8 +678,10 @@ export default function DailyBricks() {
           {tab === "home" && (
             <div className="home pb">
               <div className="greeting">
+                <div className="home-eyebrow">Databricks · DE Associate · Daily Practice</div>
                 <h1>{dailyPts >= dailyGoal ? "Goal reached! 🎉" : dailyPts > 0 ? "Great work today!" : "Ready to practice?"}</h1>
                 <p>{dailyPts}/{dailyGoal} pts today{dailyPts > 0 && dailyPts < dailyGoal ? " — keep going!" : ""}</p>
+                <div className="home-tagline">5 minutes. Every day. Until it sticks.<br/>Stop cramming. Start training.</div>
                 {dailyPts > 0 && (
                   <div className="pts-bar-wrap">
                     <div className="pts-bar-fill" style={{width: `${Math.min(100, dailyPts/dailyGoal*100)}%`}}/>
@@ -665,11 +689,19 @@ export default function DailyBricks() {
                 )}
               </div>
 
+              <div className="cert-banner">
+                <div className="cert-eyebrow">🎓 Cert Prep</div>
+                <div className="cert-title">DE Associate Exam</div>
+                <div className="cert-sub">49 exercises across 7 zones · mapped directly to exam sections</div>
+                <div className="cert-pills">
+                  {["Delta Lake","Spark SQL","Streaming","Unity Catalog","Performance"].map(p => (
+                    <span key={p} className="cert-pill">{p}</span>
+                  ))}
+                </div>
+              </div>
+
               <button className="btn-start" onClick={() => setScreen("setup")}>
-                Start Practice <span>→</span>
-              </button>
-              <button className="btn-login">
-                <span style={{color:"var(--yellow)"}}>Login or register</span> to save progress
+                Start Practice →
               </button>
 
               <div className="section-head">🎓 Cert Prep</div>
@@ -693,6 +725,7 @@ export default function DailyBricks() {
                     <div className="topic-icon">{t.icon}</div>
                     <div className="topic-name">{t.name}</div>
                     <div className="topic-count">{t.count} exercises</div>
+                    <div className="tc-bar-track"><div className="tc-bar-fill" style={{width:`${Math.min(100,Math.round((topicProgress[t.id]||0)/t.count*100))}%`}}/></div>
                   </div>
                 ))}
               </div>
@@ -893,13 +926,13 @@ export default function DailyBricks() {
                 </div>
               </div>
 
-              <div className="profile-footer">A DailyBricks project</div>
+              <div className="profile-footer">Built by <a href="https://www.linkedin.com/in/neha-rani-r/" target="_blank" rel="noopener noreferrer" style={{color:"var(--text2)"}}>Neha Rani</a> · Not affiliated with or endorsed by Databricks, Inc.</div>
             </div>
           )}
 
           {/* BOTTOM NAV */}
           <nav className="bot-nav">
-            {[["home","🏠","Home"],["stats","📊","Stats"],["profile","👤","Profile"]].map(([id,icon,label]) => (
+            {[["home","🏠","Home"],["stats","📊","Stats"],["profile","⚙️","Settings"]].map(([id,icon,label]) => (
               <button key={id} className={`nav-item ${tab===id?"on":""}`} onClick={() => { setTab(id); setScreen(id); }}>
                 <span className="nav-icon">{icon}</span>
                 {label}
